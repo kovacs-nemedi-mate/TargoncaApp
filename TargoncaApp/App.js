@@ -10,9 +10,21 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator>
-        <Stack.Screen name="Home" component={Home} />
-        <Stack.Screen name="Targonca" component={Targonca} />
-        <Stack.Screen name="Pairing" component={Pairing} />
+        <Stack.Screen
+          name="Home"
+          component={Home}
+          options={{ headerTitle: "" }}
+        />
+        <Stack.Screen
+          name="Targonca"
+          component={Targonca}
+          options={{ headerTitle: "" }}
+        />
+        <Stack.Screen
+          name="Pairing"
+          component={Pairing}
+          options={{ headerTitle: "" }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
