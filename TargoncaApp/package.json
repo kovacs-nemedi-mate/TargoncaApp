@@ -4,16 +4,28 @@
   "main": "index.js",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web"
+    "start:dev": "expo start --dev-client",
+    "android": "expo run:android",
+    "android:dev": "expo start --dev-client --android",
+    "ios": "expo run:ios",
+    "ios:dev": "expo start --dev-client --ios",
+    "web": "expo start --web",
+    "server": "node src/server/server.js",
+    "dev:server": "nodemon src/server/server.js",
+    "build:android:dev": "npx eas build --profile development --platform android",
+    "build:ios:dev": "npx eas build --profile development --platform ios"
   },
   "dependencies": {
+    "@react-native-community/netinfo": "11.5.2",
     "@react-navigation/native": "^7.2.2",
     "@react-navigation/native-stack": "^7.14.12",
     "@react-navigation/stack": "^7.8.11",
+    "cors": "^2.8.5",
     "expo": "^55.0.17",
+    "expo-dev-client": "~55.0.28",
     "expo-status-bar": "~55.0.5",
+    "express": "^4.18.2",
+    "mysql2": "^3.22.3",
     "react": "19.2.0",
     "react-native": "0.83.6",
     "react-native-element-dropdown": "^2.12.4",
@@ -26,5 +38,8 @@
     "postcss": "8.5.10",
     "uuid": "14.0.0"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
 }
