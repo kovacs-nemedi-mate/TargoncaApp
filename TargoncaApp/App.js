@@ -1,12 +1,37 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import { useNetInfo } from "@react-native-community/netinfo";
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
 import Home from "./src/screens/Home";
 import Targonca from "./src/screens/Targonca";
 import Pairing from "./src/screens/Pairing";
+import Settings from "./src/screens/Settings";
 
 const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
+
+function HomeStack() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="Home"
+        component={Home}
+        options={{ headerTitle: "" }}
+      />
+      <Stack.Screen
+        name="Targonca"
+        component={Targonca}
+        options={{ headerTitle: "" }}
+      />
+      <Stack.Screen
+        name="Pairing"
+        component={Pairing}
+        options={{ headerTitle: "" }}
+      />
+    </Stack.Navigator>
+  );
+}
 
 export default function App() {
   const netInfo = useNetInfo();
@@ -14,26 +39,23 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      
-
       <NavigationContainer>
-        <Stack.Navigator>
-          <Stack.Screen
-            name="Home"
-            component={Home}
-            options={{ headerTitle: "" }}
+        <Tab.Navigator
+          screenOptions={{
+            headerShown: false,
+          }}
+        >
+          <Tab.Screen
+            name="HomeTab"
+            component={HomeStack}
+            options={{ title: "Home" }}
           />
-          <Stack.Screen
-            name="Targonca"
-            component={Targonca}
-            options={{ headerTitle: "" }}
+          <Tab.Screen
+            name="Settings"
+            component={Settings}
+            options={{ title: "Settings" }}
           />
-          <Stack.Screen
-            name="Pairing"
-            component={Pairing}
-            options={{ headerTitle: "" }}
-          />
-        </Stack.Navigator>
+        </Tab.Navigator>
       </NavigationContainer>
     </View>
   );

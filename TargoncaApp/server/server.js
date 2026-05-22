@@ -19,7 +19,7 @@ if (!dotenvResult || dotenvResult.error) {
 }
 
 const app = express()
-const port = process.env.PORT || 3004
+const port = process.env.PORT || 3005
 
 const dbHost = process.env.DB_HOST
 const dbUser = process.env.DB_USER
@@ -40,9 +40,9 @@ const db = mysql.createPool({
 	queueLimit: 0,
 })
 
-app.use(cors())
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.get('/health', (req, res) => {
 	res.json({ status: 'ok', now: new Date().toISOString() })
