@@ -127,7 +127,7 @@ export default function Settings() {
         </Text>
         <TextInput
           style={styles.input}
-          placeholder="10.0.2.2:3004 vagy http://192.168.1.50:3004"
+          placeholder="192.168.1.50:3004 vagy http://192.168.1.50:3004"
           placeholderTextColor="#7A8783"
           value={serverAddress}
           onChangeText={setServerAddress}
@@ -156,7 +156,7 @@ export default function Settings() {
       <View style={styles.hintCard}>
         <Text style={styles.hintTitle}>Tipp</Text>
         <Text style={styles.hintText}>
-          Emulatoron a gepedhez a 10.0.2.2 cimen ersz el. Valodi telefonon a geped LAN IP cimet hasznald.
+          Valodi telefonon a geped LAN IP cimet hasznald. Expo Go-hoz a telefon es a gep ugyanazon a halozaton legyen.
         </Text>
       </View>
 

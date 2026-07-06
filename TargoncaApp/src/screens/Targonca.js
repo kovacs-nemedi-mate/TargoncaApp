@@ -133,6 +133,8 @@ export default function Targonca({ navigation, route }) {
     setError("");
     setErrorVisible(false);
 
+    let saveSucceeded = false;
+
     try {
       const result = await apiPost("/targonca_update", {
         nev: targoncaNev,
@@ -161,13 +163,17 @@ export default function Targonca({ navigation, route }) {
       }
 
       await loadTargoncak();
+      saveSucceeded = true;
     } catch (err) {
       setError(err.message || "Nem sikerült menteni a targoncát.");
       setErrorVisible(true);
     } finally {
       setSaving(false);
     }
-    navigation.navigate("Home");
+
+    if (saveSucceeded) {
+      navigation.navigate("Home");
+    }
   };
 
   return (

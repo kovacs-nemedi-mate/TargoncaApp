@@ -2,7 +2,8 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import { useNetInfo } from "@react-native-community/netinfo";
-import { View, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import Home from "./src/screens/Home";
 import Targonca from "./src/screens/Targonca";
 import Pairing from "./src/screens/Pairing";
@@ -13,7 +14,18 @@ const Tab = createBottomTabNavigator();
 
 function HomeStack() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { height: 56 },
+        headerTitleStyle: {
+          fontSize: 16,
+          fontWeight: "700",
+        },
+        headerShadowVisible: false,
+        headerBackTitleVisible: false,
+        headerLargeTitle: false,
+      }}
+    >
       <Stack.Screen
         name="Home"
         component={Home}
@@ -39,21 +51,38 @@ export default function App() {
 
   return (
     <View style={styles.container}>
+      {offline ? (
+        <View style={styles.banner}>
+          <Text style={styles.bannerText}>Nincs hálózati kapcsolat. A szerver nem lesz elérhető.</Text>
+        </View>
+      ) : null}
       <NavigationContainer>
         <Tab.Navigator
           screenOptions={{
             headerShown: false,
+            tabBarActiveTintColor: "#1D4ED8",
+            tabBarInactiveTintColor: "#64748B",
           }}
         >
           <Tab.Screen
             name="HomeTab"
             component={HomeStack}
-            options={{ title: "Home" }}
+            options={{
+              title: "Home",
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="home-outline" color={color} size={size} />
+              ),
+            }}
           />
           <Tab.Screen
             name="Settings"
             component={Settings}
-            options={{ title: "Settings" }}
+            options={{
+              title: "Settings",
+              tabBarIcon: ({ color, size }) => (
+                <Ionicons name="settings-outline" color={color} size={size} />
+              ),
+            }}
           />
         </Tab.Navigator>
       </NavigationContainer>

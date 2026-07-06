@@ -80,6 +80,8 @@ export default function Home({ navigation }) {
         setError(err.message || "A szerver nem érhető el.");
         setErrorVisible(true);
       }
+
+      return;
     }
 
     try {
@@ -155,7 +157,11 @@ export default function Home({ navigation }) {
 
 
   return (
-    <ScrollView style={styles.screen}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={styles.heroCard}>
         <Text style={styles.eyebrow}>TargoncaApp</Text>
         <Text style={styles.subtitle}>Valassz egy muveletet a folytatashoz.</Text>
@@ -266,6 +272,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#F4F7F5",
     paddingHorizontal: 20,
     paddingTop: 28,
+  },
+  content: {
+    paddingBottom: 30,
+    gap: 18,
   },
   heroCard: {
     backgroundColor: "#1D4E4A",

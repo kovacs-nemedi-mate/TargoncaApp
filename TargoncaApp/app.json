@@ -16,7 +16,6 @@
       "supportsTablet": true
     },
     "android": {
-      "usesCleartextTraffic": true,
       "package": "com.targoncaapp.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/TargoncaLogo.png",
@@ -26,6 +25,16 @@
     "web": {
       "favicon": "./assets/TargoncaLogo.png"
     },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": "e6121e86-54ff-4939-9a19-8619e4c91e7b"

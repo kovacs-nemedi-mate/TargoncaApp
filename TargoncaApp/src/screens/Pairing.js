@@ -58,6 +58,8 @@ export default function Pairing({ navigation }) {
       return;
     }
 
+    let saveSucceeded = false;
+
     try {
       const gongyoResult = await apiPost("/gongyolegek", {
         id: selectedGId,
@@ -78,13 +80,17 @@ export default function Pairing({ navigation }) {
       setBarcode("");
       setRfId("");
       loadGongyolegek();
+      saveSucceeded = true;
     } catch (err) {
       setError(err.message || "Nem sikerült menteni a párosítást.");
       setErrorVisible(true);
     } finally {
       setSaving(false);
     }
-    navigation.navigate("Home");
+
+    if (saveSucceeded) {
+      navigation.navigate("Home");
+    }
   };
 
   return (

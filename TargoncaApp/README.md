@@ -1,6 +1,6 @@
 # TargoncaApp
 
-This project is set up to use an Expo development build instead of Expo Go.
+This project is set up to run in Expo Go.
 
 ## One-time setup
 
@@ -10,35 +10,15 @@ Install the missing packages:
 npm install
 ```
 
-If `expo-dev-client` is not installed automatically, add it with:
-
-```bash
-npx expo install expo-dev-client
-```
-
-## Create a development build
-
-Build the Android dev client:
-
-```bash
-npm run build:android:dev
-```
-
-If you want iOS, use:
-
-```bash
-npm run build:ios:dev
-```
-
 ## Run the app locally
 
-Start Metro in dev-client mode:
+Start Metro for Expo Go on your local network:
 
 ```bash
-npm run start:dev
+npm run start
 ```
 
-Then open the installed development build on your device and connect to the running bundler.
+Then scan the QR code with the Expo Go app on your device.
 
 ## Server environment variables
 
@@ -67,8 +47,7 @@ DB_PORT=3307
 
 ## Notes
 
-- `app.json` now uses the scheme `targoncaapp` for the dev build.
-- `eas.json` includes a `development` profile with `developmentClient: true`.
+- `app.json` uses the scheme `targoncaapp`.
 - The server can still be started with:
 
 ```bash
