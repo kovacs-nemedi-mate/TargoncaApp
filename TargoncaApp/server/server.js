@@ -4,8 +4,9 @@ const mysql = require('mysql2/promise')
 const dotenv = require('dotenv')
 const path = require('path')
 
-// Try a couple locations for the .env file: project root relative to this file, then cwd
-const possibleEnvPaths = [path.resolve(__dirname, '../../.env'), path.resolve(process.cwd(), '.env')]
+// Load the .env stored in the project root, regardless of where Node was started.
+// `server.js` is in <project>/server, so the project root is one directory up.
+const possibleEnvPaths = [path.resolve(__dirname, '../.env'), path.resolve(process.cwd(), '.env')]
 let dotenvResult = null
 for (const p of possibleEnvPaths) {
 	dotenvResult = dotenv.config({ override: true, path: p })
@@ -68,22 +69,95 @@ app.get('/gongyoleg', async (req, res) => {
 	}
 })
 
-app.post('/cimkek', async (req, res) => {
-	const { g_id, rfid, vkod } = req.body
+app.get('/gongyolegek/rfids', async (req, res) => {
+	try {
+		// UNION returns one list, without duplicates when an RFID exists in both
+		// the legacy lf_id column and the new RFID column.
+		const [rows] = await db.query(`
+			SELECT lf_id AS rfid
+			FROM gongyolegek
+			WHERE lf_id IS NOT NULL AND lf_id <> ''
+			UNION
+			SELECT RFID AS rfid
+			FROM gongyolegek
+			WHERE RFID IS NOT NULL AND RFID <> ''
+			ORDER BY rfid
+		`)
 
-	if (!g_id || !rfid || !vkod) {
-		return res.status(400).json({ error: 'g_id, rfid, and vkod are required' })
+		res.json(rows)
+	} catch (error) {
+		console.error('Error fetching gongyolegek RFIDs:', error)
+		res.status(500).json({ error: 'Internal server error' })
+	}
+})
+
+app.get('/gongyolegek/inactive', async (req, res) => {
+	try {
+		const [rows] = await db.query(`
+			SELECT id, lf_id, RFID
+			FROM gongyolegek
+			WHERE aktiv = 0
+			ORDER BY id DESC
+		`)
+		res.json(rows)
+	} catch (error) {
+		console.error('Error fetching inactive gongyolegek records:', error)
+		res.status(500).json({ error: 'Internal server error' })
+	}
+})
+
+app.get('/cimkek/vkodok', async (req, res) => {
+	try {
+		const [rows] = await db.query(`
+			SELECT vkod
+			FROM kinyom_cimkek
+		`)
+		res.json(rows)
+	} catch (error) {
+		console.error('Error fetching cimke vkodok:', error)
+		res.status(500).json({ error: 'Internal server error' })
+	}
+})
+
+app.post('/cimkek', async (req, res) => {
+	const { pairing_id: pairingId, g_id: gId, lf_id: lfId, RFID, vkod } = req.body
+
+	if (!pairingId || !gId || !lfId || !RFID || !vkod) {
+		return res.status(400).json({ error: 'pairing_id, g_id, lf_id, RFID, and vkod are required' })
 	}
 
+	let connection
 	try {
-		const [result] = await db.query(
+		connection = await db.getConnection()
+		await connection.beginTransaction()
+
+		const [labelResult] = await connection.query(
 			'UPDATE kinyom_cimkek SET lf_id = ?, g_id = ? WHERE vkod = ?',
-			[rfid, g_id, vkod]
+			[lfId, gId, vkod]
 		)
-		res.json({ success: true, id: result.insertId })
+
+		if (labelResult.affectedRows !== 1) {
+			throw new Error(`No cimke found for vkod ${vkod}`)
+		}
+
+		// Both RFID values must match the inactive pairing created by the first form.
+		const [pairingResult] = await connection.query(
+			'UPDATE gongyolegek SET aktiv = ? WHERE id = ? AND g_id = ? AND lf_id = ? AND RFID = ? AND aktiv = ?',
+			[1, pairingId, gId, lfId, RFID, 0]
+		)
+
+		if (pairingResult.affectedRows !== 1) {
+			throw new Error(`Inactive gongyoleg pairing ${pairingId} not found`)
+		}
+
+		await connection.commit()
+		res.json({ success: true, id: Number(pairingId), aktiv: 1 })
 	} catch (error) {
+		if (connection) await connection.rollback()
 		console.error('Error updating cimke:', error)
 		res.status(500).json({ error: 'Internal server error' })
+	} finally {
+		if (connection) connection.release()
 	}
 });
 app.post('/targonca_update', async (req, res) => {
@@ -106,15 +180,25 @@ app.post('/targonca_update', async (req, res) => {
 });
 
 app.post('/gongyolegek', async (req, res) => {
-	const{id ,RFID} = req.body;
+	const { g_id: gId, lf_id: lfId, RFID } = req.body
+
+	if (!gId || !lfId || !RFID) {
+		return res.status(400).json({ error: 'g_id, lf_id, and RFID are required' })
+	}
+
 	try {
-		const [result] = await db.query('INSERT INTO gongyolegek (g_id, lf_id, aktiv) VALUES (?, ?, ?)', [id, RFID, 1]);
-		res.json({ success: true, id: result.insertId })
+		// First form: save the selected gongyoleg and both RFID values as inactive.
+		const [result] = await db.query(
+			'INSERT INTO gongyolegek (g_id, lf_id, RFID, aktiv) VALUES (?, ?, ?, ?)',
+			[gId, lfId, RFID, 0]
+		)
+		res.status(201).json({ success: true, id: result.insertId, g_id: gId, aktiv: 0 })
 	} catch (error) {
-		console.error('Error fetching gongyoleg data:', error)
+		console.error('Error creating inactive gongyoleg record:', error)
 		res.status(500).json({ error: 'Internal server error' })
 	}
 });
+
 app.get('/raktar', async (req, res) => {
 	try {
 		const [rows] = await db.query('SELECT id, nev FROM raktar')

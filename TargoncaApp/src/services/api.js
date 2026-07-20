@@ -96,6 +96,29 @@ export async function resetApiBaseUrl() {
   return cachedApiBaseUrl
 }
 
+// Gongyoleg RFID workflow
+export async function getGongyolegekRfids() {
+  return apiGet('/gongyolegek/rfids')
+}
+
+export async function getInactiveGongyolegek() {
+  return apiGet('/gongyolegek/inactive')
+}
+
+export async function getCimkeVkods() {
+  return apiGet('/cimkek/vkodok')
+}
+
+// First form: creates an inactive record for the selected gongyoleg and RFIDs.
+export async function createInactiveGongyoleg({ g_id, lf_id, RFID }) {
+  return apiPost('/gongyolegek', { g_id, lf_id, RFID })
+}
+
+// Second form: applies the scanned vkod to the label and activates the pairing.
+export async function completeGongyolegPairing({ pairing_id, g_id, lf_id, RFID, vkod }) {
+  return apiPost('/cimkek', { pairing_id, g_id, lf_id, RFID, vkod })
+}
+
 
 
 export async function apiGet(path) {
