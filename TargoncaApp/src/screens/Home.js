@@ -163,8 +163,8 @@ export default function Home({ navigation }) {
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.heroCard}>
-        <Text style={styles.eyebrow}>TargoncaApp</Text>
-        <Text style={styles.subtitle}>Valassz egy muveletet a folytatashoz.</Text>
+        <Text style={styles.eyebrow}>Targonca App</Text>
+        <Text style={styles.subtitle}>Válassz egy műveletet a folytatáshoz.</Text>
        
       </View>
 
@@ -199,6 +199,14 @@ export default function Home({ navigation }) {
         </View>
       ) : (
         <View style={styles.previewCard}>
+          <Pressable
+            style={[styles.actionButton, styles.secondaryButton]}
+            onPress={() => {
+              navigation.navigate("Pairing");
+            }}
+          >
+            <Text style={styles.secondaryButtonText}>Párosítás</Text>
+          </Pressable>
           <View style={styles.previewHeader}>
             <Text style={styles.previewTitle}>Aktív targonca</Text>
             <Text style={styles.previewCount}>{targoncak.length} rekord</Text>
@@ -244,14 +252,7 @@ export default function Home({ navigation }) {
             <Text style={styles.primaryButtonText}>Targonca adatlap</Text>
           </Pressable>
 
-          <Pressable
-            style={[styles.actionButton, styles.secondaryButton]}
-            onPress={() => {
-              navigation.navigate("Pairing");
-            }}
-          >
-            <Text style={styles.secondaryButtonText}>Párosítás</Text>
-          </Pressable>
+          
         </View>
       ) : null}
 

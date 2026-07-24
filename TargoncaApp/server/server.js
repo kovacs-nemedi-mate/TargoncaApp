@@ -132,8 +132,8 @@ app.post('/cimkek', async (req, res) => {
 		await connection.beginTransaction()
 
 		const [labelResult] = await connection.query(
-			'UPDATE kinyom_cimkek SET lf_id = ?, g_id = ? WHERE vkod = ?',
-			[lfId, gId, vkod]
+			'UPDATE kinyom_cimkek SET lf_id = ?, g_id = ?, RFID = ? WHERE vkod = ?',
+			[lfId, gId, RFID, vkod]
 		)
 
 		if (labelResult.affectedRows !== 1) {

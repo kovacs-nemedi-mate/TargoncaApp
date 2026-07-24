@@ -6,9 +6,16 @@ import { apiGet, apiPost } from "../services/api";
 import ErrorPopup from "../components/ErrorPopup";
 
 const dropdownData = [
-  { label: "1", value: "1" },
-  { label: "2", value: "2" },
-  { label: "3", value: "3" },
+  { label: "A", value: "1" },
+  { label: "B", value: "2" },
+  { label: "C", value: "3" },
+  { label: "D", value: "4" },
+  { label: "E", value: "5" },
+  { label: "F", value: "6" },
+  { label: "G", value: "7" },
+  { label: "H", value: "8" },
+  { label: "I", value: "9" },
+  { label: "J", value: "10" },
 ];
 
 const getFieldValue = (item, fieldName) => {

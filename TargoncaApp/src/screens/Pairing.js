@@ -1,6 +1,6 @@
-import { View, Text, Pressable, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, Pressable, StyleSheet, ActivityIndicator, TextInput } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   createInactiveGongyoleg,
   completeGongyolegPairing,
@@ -9,6 +9,7 @@ import {
   apiGet,
 } from "../services/api";
 import ErrorPopup from "../components/ErrorPopup";
+
 
 export default function Pairing({ navigation }) {
   const [rfids, setRfids] = useState([]);
@@ -24,6 +25,10 @@ export default function Pairing({ navigation }) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [errorVisible, setErrorVisible] = useState(false);
+  const lfInputRef = useRef(null);
+  const rfInputRef = useRef(null);
+
+
 
   const rfidItems = rfids.map(({ rfid }) => ({ label: rfid, value: rfid }));
   const gongyolegItems = gongyolegek.map(({ id, nev }) => ({
@@ -31,6 +36,12 @@ export default function Pairing({ navigation }) {
     value: String(id),
   }));
   const vkodItems = vkodok.map(({ vkod: value }) => ({ label: value, value }));
+ 
+  useEffect(() => {
+    if (!loading) {
+        lfInputRef.current?.focus();
+    }
+  }, [loading]);
 
   useEffect(() => {
     loadFormData();
@@ -51,7 +62,7 @@ export default function Pairing({ navigation }) {
       setGongyolegek(Array.isArray(gongyolegData) ? gongyolegData : []);
       setVkodok(Array.isArray(vkodData) ? vkodData : []);
     } catch (err) {
-      setError(err.message || "Nem sikerult betolteni az adatokat.");
+      setError(err.message || "Nem sikerült betolteni az adatokat.");
       setErrorVisible(true);
     } finally {
       setLoading(false);
@@ -60,7 +71,7 @@ export default function Pairing({ navigation }) {
 
   const createRfidPairing = async () => {
     if (!lfId || !rfId) {
-      setError("Valaszd ki mindket RF ID-t.");
+      setError("Válassz ki mindkét RF ID-t.");
       setErrorVisible(true);
       return;
     }
@@ -72,7 +83,7 @@ export default function Pairing({ navigation }) {
 
     try {
       if (!selectedGId) {
-        setError("Valassz gongyoleget.");
+        setError("Válassz göngyöleget.");
         setErrorVisible(true);
         return;
       }
@@ -83,14 +94,14 @@ export default function Pairing({ navigation }) {
         RFID: rfId,
       });
       if (!result?.success || !result?.id) {
-        throw new Error("A szerver nem adott vissza ervenyes azonosítot.");
+        throw new Error("A szerver nem adott vissza érvényes azonosítot.");
       }
 
       setSelectedPairingId(String(result.id));
       await loadFormData();
-      setMessage("Az RF ID-k mentve. A masodik formon aktivalhatod a parositast.");
+      setMessage("Az RF ID-k mentve. A második oldalon aktivalhatod a párosítást.");
     } catch (err) {
-      setError(err.message || "Nem sikerult menteni az RF ID-ket.");
+      setError(err.message || "Nem sikerült menteni az RF ID-ket.");
       setErrorVisible(true);
     } finally {
       setSaving(false);
@@ -99,7 +110,7 @@ export default function Pairing({ navigation }) {
 
   const completePairing = async () => {
     if (!selectedPairingId || !selectedGId || !lfId || !rfId || !vkod) {
-      setError("Add meg a vonalkodot az aktivalashoz.");
+      setError("Add meg a vonalkódot az aktivaláshoz.");
       setErrorVisible(true);
       return;
     }
@@ -118,10 +129,10 @@ export default function Pairing({ navigation }) {
         vkod,
       });
       if (!result?.success) {
-        throw new Error("A parositas aktivalasa nem sikerult.");
+        throw new Error("A párosítás aktiválása nem sikerült.");
       }
 
-      setMessage("Parositas aktivalva.");
+      setMessage("Párosítás aktiválva.");
       setLfId("");
       setRfId("");
       setSelectedGId("");
@@ -130,7 +141,7 @@ export default function Pairing({ navigation }) {
       await loadFormData();
       navigation.navigate("Home");
     } catch (err) {
-      setError(err.message || "Nem sikerult aktivalni a parositast.");
+      setError(err.message || "Nem sikerült0 aktiválni a párosítást.");
       setErrorVisible(true);
     } finally {
       setSaving(false);
@@ -149,30 +160,24 @@ export default function Pairing({ navigation }) {
           ) : (
             <>
               <Text style={styles.label}>RF ID 1</Text>
-              <Dropdown
-                style={styles.dropdown}
-                data={rfidItems}
-                labelField="label"
-                valueField="value"
-                placeholder="Válaszd ki az első RF ID-t"
+              <TextInput
+                style={styles.input}
+                placeholder="Add meg az első RF ID-t"
                 value={lfId}
-                search
-                searchPlaceholder="RF ID keresése"
-                onChange={(item) => setLfId(item.value)}
+                onChangeText={setLfId}
+                ref={lfInputRef}
+                placeholderTextColor="#2F4B46"
               />
-
               <Text style={styles.label}>RF ID 2</Text>
-              <Dropdown
-                style={styles.dropdown}
-                data={rfidItems}
-                labelField="label"
-                valueField="value"
-                placeholder="Válaszd ki a második RF ID-t"
+              <TextInput
+                style={styles.input}
+                placeholder="Add meg a második RF ID-t"
                 value={rfId}
-                search
-                searchPlaceholder="RF ID keresése"
-                onChange={(item) => setRfId(item.value)}
+                onChangeText={setRfId}
+                ref={rfInputRef}
+                placeholderTextColor="#2F4B46"
               />
+                
 
               <Text style={styles.label}>Göngyöleg</Text>
               <Dropdown
@@ -199,19 +204,13 @@ export default function Pairing({ navigation }) {
         </View>
       ) : (
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>2. Gongyoleg aktivalasa</Text>
-          <Text style={styles.label}>Vonalkod</Text>
-          <Dropdown
+          <Text style={styles.sectionTitle}>2. Göngyöleg aktiválása</Text>
+          <Text style={styles.label}>Vonalkód</Text>
+          <TextInput
             style={styles.input}
-            data={vkodItems}
-            labelField="label"
-            valueField="value"
-            placeholder="Válaszd ki a vonalkodot"
+            placeholder="Add meg a vonalkódot"
             value={vkod}
-            search
-            searchPlaceholder="Vonalkod keresése"
-            disable={saving}
-            onChange={(item) => setVkod(item.value)}
+            onChangeText={setVkod}
           />
           <Pressable
             style={[styles.button, (loading || saving) && styles.buttonDisabled]}
@@ -274,8 +273,9 @@ const styles = StyleSheet.create({
     borderRadius: 10, 
     backgroundColor: "#FAFCFB", 
     paddingHorizontal: 12, 
-    paddingVertical: 10, 
-    fontSize: 15 
+    paddingVertical: 5, 
+    fontSize: 15, 
+    placeholderTextColor: "#2F4B46",
   },
   dropdown: { 
     height: 46, 
