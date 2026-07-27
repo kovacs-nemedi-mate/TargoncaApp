@@ -110,13 +110,13 @@ export async function getCimkeVkods() {
 }
 
 // First form: creates an inactive record for the selected gongyoleg and RFIDs.
-export async function createInactiveGongyoleg({ g_id, lf_id, RFID }) {
-  return apiPost('/gongyolegek', { g_id, lf_id, RFID })
+export async function createInactiveGongyoleg({ lf_id, RFID }) {
+  return apiPost('/gongyolegek', { lf_id, RFID })
 }
 
 // Second form: applies the scanned vkod to the label and activates the pairing.
-export async function completeGongyolegPairing({ pairing_id, g_id, lf_id, RFID, vkod }) {
-  return apiPost('/cimkek', { pairing_id, g_id, lf_id, RFID, vkod })
+export async function completeGongyolegPairing({ pairing_id, lf_id, RFID, vkod }) {
+  return apiPost('/cimkek', { pairing_id, lf_id, RFID, vkod })
 }
 
 

@@ -74,6 +74,10 @@ export default function Pairing({ navigation }) {
       setError("Válassz ki mindkét RF ID-t.");
       setErrorVisible(true);
       return;
+    }else if (lfId === rfId) {
+      setError("Az RF ID-k nem lehetnek azonosak.");
+      setErrorVisible(true);
+      return;
     }
 
     setSaving(true);
@@ -82,14 +86,9 @@ export default function Pairing({ navigation }) {
     setErrorVisible(false);
 
     try {
-      if (!selectedGId) {
-        setError("Válassz göngyöleget.");
-        setErrorVisible(true);
-        return;
-      }
+      
 
       const result = await createInactiveGongyoleg({
-        g_id: selectedGId,
         lf_id: lfId,
         RFID: rfId,
       });
@@ -121,9 +120,9 @@ export default function Pairing({ navigation }) {
     setErrorVisible(false);
 
     try {
+      createRfidPairing();
       const result = await completeGongyolegPairing({
         pairing_id: selectedPairingId,
-        g_id: selectedGId,
         lf_id: lfId,
         RFID: rfId,
         vkod,
@@ -152,81 +151,69 @@ export default function Pairing({ navigation }) {
     <View style={styles.screen}>
       <Text style={styles.title}>Párosítás</Text>
 
-      {!selectedPairingId ? (
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>1. RF ID-k rögzítése</Text>
-          {loading ? (
-            <ActivityIndicator color="#0E7A6D" />
-          ) : (
-            <>
-              <Text style={styles.label}>RF ID 1</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Add meg az első RF ID-t"
-                value={lfId}
-                onChangeText={setLfId}
-                ref={lfInputRef}
-                placeholderTextColor="#2F4B46"
-              />
-              <Text style={styles.label}>RF ID 2</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Add meg a második RF ID-t"
-                value={rfId}
-                onChangeText={setRfId}
-                ref={rfInputRef}
-                placeholderTextColor="#2F4B46"
-              />
-                
+       {!selectedPairingId ? (
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}> RF ID-k rögzítése</Text>
 
-              <Text style={styles.label}>Göngyöleg</Text>
-              <Dropdown
-                style={styles.dropdown}
-                data={gongyolegItems}
-                labelField="label"
-                valueField="value"
-                placeholder="Válaszd ki a göngyöleget"
-                value={selectedGId}
-                search
-                searchPlaceholder="Keresés név alapján"
-                onChange={(item) => setSelectedGId(item.value)}
-              />
-            </>
-          )}
+        {loading ? (
+          <ActivityIndicator color="#0E7A6D" />
+        ) : (
+          <>
+            <Text style={styles.label}>RF ID 1</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Add meg az első RF ID-t"
+              value={lfId}
+              onChangeText={setLfId}
+              ref={lfInputRef}
+              placeholderTextColor="#2F4B46"
+              maxLength={25}
+            />
 
-          <Pressable
-            style={[styles.button, (saving || loading) && styles.buttonDisabled]}
-            onPress={createRfidPairing}
-            disabled={saving || loading}
-          >
-            <Text style={styles.buttonText}>{saving ? "Mentés..." : "RF ID-k mentése"}</Text>
-          </Pressable>
-        </View>
-      ) : (
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>2. Göngyöleg aktiválása</Text>
-          <Text style={styles.label}>Vonalkód</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Add meg a vonalkódot"
-            value={vkod}
-            onChangeText={setVkod}
-          />
-          <Pressable
-            style={[styles.button, (loading || saving) && styles.buttonDisabled]}
-            onPress={completePairing}
-            disabled={loading || saving}
-          >
-            <Text style={styles.buttonText}>{saving ? "Mentés..." : "Aktiválás"}</Text>
-          </Pressable>
-        </View>
-      )}
+            <Text style={styles.label}>RF ID 2</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Add meg a második RF ID-t"
+              value={rfId}
+              onChangeText={setRfId}
+              ref={rfInputRef}
+              placeholderTextColor="#2F4B46"
+              maxLength={25}
+            />
 
-      {!!message && <Text style={styles.successText}>{message}</Text>}
-      <ErrorPopup visible={errorVisible && !!error} message={error} onClose={() => setErrorVisible(false)} />
-    </View>
-  );
+            <Text style={styles.label}>Vonalkód</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Add meg a vonalkódot"
+              value={vkod}
+              onChangeText={setVkod}
+              placeholderTextColor="#2F4B46"
+              maxLength={13}
+            />
+
+            <Pressable
+              style={[
+                styles.button,
+                (loading || saving) && styles.buttonDisabled,
+              ]}
+              onPress={completePairing}
+              disabled={loading || saving}
+            >
+              <Text style={styles.buttonText}>
+                {saving ? "Mentés..." : "Aktiválás"}
+              </Text>
+            </Pressable>
+          </>
+        )}
+      </View>
+    ) : null}
+  </View>
+);
 }
+         
+      
+  
+
 
 const styles = StyleSheet.create({
   screen: {

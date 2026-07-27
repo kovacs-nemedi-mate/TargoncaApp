@@ -120,10 +120,10 @@ app.get('/cimkek/vkodok', async (req, res) => {
 })
 
 app.post('/cimkek', async (req, res) => {
-	const { pairing_id: pairingId, g_id: gId, lf_id: lfId, RFID, vkod } = req.body
+	const { pairing_id: pairingId, lf_id: lfId, RFID, vkod } = req.body
 
-	if (!pairingId || !gId || !lfId || !RFID || !vkod) {
-		return res.status(400).json({ error: 'pairing_id, g_id, lf_id, RFID, and vkod are required' })
+	if (!pairingId || !lfId || !RFID || !vkod) {
+		return res.status(400).json({ error: 'pairing_id, lf_id, RFID, and vkod are required' })
 	}
 
 	let connection
@@ -133,7 +133,7 @@ app.post('/cimkek', async (req, res) => {
 
 		const [labelResult] = await connection.query(
 			'UPDATE kinyom_cimkek SET lf_id = ?, g_id = ?, RFID = ? WHERE vkod = ?',
-			[lfId, gId, RFID, vkod]
+			[lfId, 1, RFID, vkod]
 		)
 
 		if (labelResult.affectedRows !== 1) {
@@ -180,21 +180,21 @@ app.post('/targonca_update', async (req, res) => {
 });
 
 app.post('/gongyolegek', async (req, res) => {
-	const { g_id: gId, lf_id: lfId, RFID } = req.body
+	const { lf_id: lfId, RFID } = req.body
 
-	if (!gId || !lfId || !RFID) {
-		return res.status(400).json({ error: 'g_id, lf_id, and RFID are required' })
+	if ( !lfId || !RFID) {
+		return res.status(400).json({ error: ' lf_id and RFID are required' })
 	}
 
 	try {
-		// First form: save the selected gongyoleg and both RFID values as inactive.
+		// First form: save the selected gongyoleg and both RFID values as active.
 		const [result] = await db.query(
 			'INSERT INTO gongyolegek (g_id, lf_id, RFID, aktiv) VALUES (?, ?, ?, ?)',
-			[gId, lfId, RFID, 0]
+			[1, lfId, RFID, 1]
 		)
-		res.status(201).json({ success: true, id: result.insertId, g_id: gId, aktiv: 0 })
+		res.status(201).json({ success: true, id: result.insertId, g_id: 1, aktiv: 1 })
 	} catch (error) {
-		console.error('Error creating inactive gongyoleg record:', error)
+		console.error('Error creating active gongyoleg record:', error)
 		res.status(500).json({ error: 'Internal server error' })
 	}
 });
