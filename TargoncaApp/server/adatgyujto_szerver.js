@@ -141,14 +141,9 @@ app.post('/cimkek', async (req, res) => {
 		}
 
 		// Both RFID values must match the inactive pairing created by the first form.
-		const [pairingResult] = await connection.query(
-			'UPDATE gongyolegek SET aktiv = ? WHERE id = ? AND g_id = ? AND lf_id = ? AND RFID = ? AND aktiv = ?',
-			[1, pairingId, gId, lfId, RFID, 0]
-		)
+		
 
-		if (pairingResult.affectedRows !== 1) {
-			throw new Error(`Inactive gongyoleg pairing ${pairingId} not found`)
-		}
+		
 
 		await connection.commit()
 		res.json({ success: true, id: Number(pairingId), aktiv: 1 })

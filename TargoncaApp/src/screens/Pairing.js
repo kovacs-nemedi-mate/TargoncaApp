@@ -80,72 +80,67 @@ export default function Pairing({ navigation }) {
       return;
     }
 
-    setSaving(true);
-    setMessage("");
-    setError("");
-    setErrorVisible(false);
+    const result = await createInactiveGongyoleg({
+    lf_id: lfId,
+    RFID: rfId,
+  });
+  
 
-    try {
-      
+  if (!result?.success || !result?.id) {
+    throw new Error("A szerver nem adott vissza érvényes pairing ID-t.");
+  }
 
-      const result = await createInactiveGongyoleg({
-        lf_id: lfId,
-        RFID: rfId,
-      });
-      if (!result?.success || !result?.id) {
-        throw new Error("A szerver nem adott vissza érvényes azonosítot.");
-      }
+  return result.id;
+};
 
-      setSelectedPairingId(String(result.id));
-      await loadFormData();
-      setMessage("Az RF ID-k mentve. A második oldalon aktivalhatod a párosítást.");
-    } catch (err) {
-      setError(err.message || "Nem sikerült menteni az RF ID-ket.");
-      setErrorVisible(true);
-    } finally {
-      setSaving(false);
+const completePairing = async () => {
+  
+  if (!lfId || !rfId || !vkod) {
+    
+    setError("Add meg a vonalkódot az aktiváláshoz.");
+    setErrorVisible(true);
+    return;
+  }
+   
+  setSaving(true);
+  setMessage("");
+  setError("");
+  setErrorVisible(false);
+
+  try {
+    
+    // Create the pairing and get its ID
+    const pairingId = await createRfidPairing();
+    
+    // Activate it immediately
+    const result = await completeGongyolegPairing({
+      pairing_id: pairingId,
+      lf_id: lfId,
+      RFID: rfId,
+      vkod,
+    });
+
+    if (!result?.success) {
+      throw new Error("A párosítás aktiválása nem sikerült.");
     }
-  };
 
-  const completePairing = async () => {
-    if (!selectedPairingId || !selectedGId || !lfId || !rfId || !vkod) {
-      setError("Add meg a vonalkódot az aktivaláshoz.");
-      setErrorVisible(true);
-      return;
-    }
+    setMessage("Párosítás aktiválva.");
 
-    setSaving(true);
-    setMessage("");
-    setError("");
-    setErrorVisible(false);
+    setLfId("");
+    setRfId("");
+    setSelectedPairingId("");
+    setVkod("");
 
-    try {
-      createRfidPairing();
-      const result = await completeGongyolegPairing({
-        pairing_id: selectedPairingId,
-        lf_id: lfId,
-        RFID: rfId,
-        vkod,
-      });
-      if (!result?.success) {
-        throw new Error("A párosítás aktiválása nem sikerült.");
-      }
+    await loadFormData();
 
-      setMessage("Párosítás aktiválva.");
-      setLfId("");
-      setRfId("");
-      setSelectedGId("");
-      setSelectedPairingId("");
-      setVkod("");
-      await loadFormData();
-      navigation.navigate("Home");
-    } catch (err) {
-      setError(err.message || "Nem sikerült0 aktiválni a párosítást.");
-      setErrorVisible(true);
-    } finally {
-      setSaving(false);
-    }
-  };
+    navigation.navigate("Home");
+  } catch (err) {
+    setError(err.message || "Nem sikerült aktiválni a párosítást.");
+    setErrorVisible(true);
+  } finally {
+    setSaving(false);
+  }
+};
 
   return (
     <View style={styles.screen}>
@@ -192,10 +187,11 @@ export default function Pairing({ navigation }) {
             />
 
             <Pressable
-              style={[
-                styles.button,
-                (loading || saving) && styles.buttonDisabled,
-              ]}
+               style={({ pressed }) => [
+                  styles.button,
+                  pressed && styles.buttonPressed,
+                  (loading || saving) && styles.buttonDisabled,
+                ]}
               onPress={completePairing}
               disabled={loading || saving}
             >
@@ -279,6 +275,11 @@ const styles = StyleSheet.create({
     paddingVertical: 14, 
     alignItems: "center" 
   },
+   buttonPressed: {
+    backgroundColor: "#0A5E55",
+    transform: [{ scale: 0.98 }],
+  },
+
   buttonDisabled: {
     opacity: 0.7 
   },
