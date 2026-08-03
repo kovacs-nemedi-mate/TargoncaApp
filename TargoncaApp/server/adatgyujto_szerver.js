@@ -148,9 +148,16 @@ app.post('/cimkek', async (req, res) => {
 		await connection.commit()
 		res.json({ success: true, id: Number(pairingId), aktiv: 1 })
 	} catch (error) {
-		if (connection) await connection.rollback()
-		console.error('Error updating cimke:', error)
-		res.status(500).json({ error: 'Internal server error' })
+		if (connection) {
+        	await connection.rollback();
+    	}
+
+   		 console.error("Error updating cimke:", error);
+
+    	res.status(500).json({
+        	success: false,
+        	error: error.message,
+    	});
 	} finally {
 		if (connection) connection.release()
 	}
