@@ -69,56 +69,6 @@ app.get('/gongyoleg', async (req, res) => {
 	}
 })
 
-app.get('/gongyolegek/rfids', async (req, res) => {
-	try {
-		// UNION returns one list, without duplicates when an RFID exists in both
-		// the legacy lf_id column and the new RFID column.
-		const [rows] = await db.query(`
-			SELECT lf_id AS rfid
-			FROM gongyolegek
-			WHERE lf_id IS NOT NULL AND lf_id <> ''
-			UNION
-			SELECT RFID AS rfid
-			FROM gongyolegek
-			WHERE RFID IS NOT NULL AND RFID <> ''
-			ORDER BY rfid
-		`)
-
-		res.json(rows)
-	} catch (error) {
-		console.error('Error fetching gongyolegek RFIDs:', error)
-		res.status(500).json({ error: 'Internal server error' })
-	}
-})
-
-app.get('/gongyolegek/inactive', async (req, res) => {
-	try {
-		const [rows] = await db.query(`
-			SELECT id, lf_id, RFID
-			FROM gongyolegek
-			WHERE aktiv = 0
-			ORDER BY id DESC
-		`)
-		res.json(rows)
-	} catch (error) {
-		console.error('Error fetching inactive gongyolegek records:', error)
-		res.status(500).json({ error: 'Internal server error' })
-	}
-})
-
-app.get('/cimkek/vkodok', async (req, res) => {
-	try {
-		const [rows] = await db.query(`
-			SELECT vkod
-			FROM kinyom_cimkek
-		`)
-		res.json(rows)
-	} catch (error) {
-		console.error('Error fetching cimke vkodok:', error)
-		res.status(500).json({ error: 'Internal server error' })
-	}
-})
-
 app.post('/cimkek', async (req, res) => {
 	const { pairing_id: pairingId, lf_id: lfId, RFID, vkod } = req.body
 
@@ -238,6 +188,128 @@ app.post('/mozgasok', async (req, res) => {
 	} catch (error) {
 		console.error('Error inserting mozgas:', error)
 		res.status(500).json({ error: 'Internal server error' })
+	}
+});
+
+app.post('/rfid_barcode', async (req, res) => {
+	const rfid = req.body.rfid || req.body.RFID || req.body.lf_id
+	const barcode = req.body.barcode || req.body.vkod
+
+	if (!rfid || !barcode) {
+		return res.status(400).json({ error: 'Both rfid and barcode are required' })
+	}
+
+	try {
+		// 1. Find the RFID's pair/counterpart from the gongyolegek table
+		const [gongyolegekRows] = await db.query(
+			'SELECT lf_id, RFID FROM gongyolegek WHERE lf_id = ? OR RFID = ? LIMIT 1',
+			[rfid, rfid]
+		)
+
+		if (gongyolegekRows.length === 0) {
+			return res.status(404).json({ error: 'A megadott RFID nem található egyetlen göngyöleg párosításban sem.' })
+		}
+
+		const lfId = gongyolegekRows[0].lf_id
+		const hfId = gongyolegekRows[0].RFID
+
+		// 2. Update kinyom_cimkek to pair both RFIDs with the barcode (vkod) by updating the vkod where both RFIDs match
+		const [result] = await db.query(
+			'UPDATE kinyom_cimkek SET vkod = ? WHERE lf_id = ? AND RFID = ?',
+			[barcode, lfId, hfId]
+		)
+
+		if (result.affectedRows === 0) {
+			return res.status(404).json({ error: 'Nem található címke a megadott RFID pároshoz.' })
+		}
+
+		res.json({
+			success: true,
+			message: 'Barcode (vkod) updated successfully for the RFID pair',
+			lf_id: lfId,
+			RFID: hfId,
+			vkod: barcode,
+			affectedRows: result.affectedRows
+		})
+	} catch (error) {
+		console.error('Error pairing RFID with barcode:', error)
+		res.status(500).json({ error: 'Internal server error' })
+	}
+});
+
+app.post('/repair_gongyoleg', async (req, res) => {
+	const rfid1 = req.body.rfid1 || req.body.lf_id
+	const rfid2 = req.body.rfid2 || req.body.RFID
+
+	if (!rfid1 || !rfid2) {
+		return res.status(400).json({ error: 'Both rfid1 and rfid2 are required' })
+	}
+
+	let connection
+	try {
+		connection = await db.getConnection()
+		await connection.beginTransaction()
+
+		// 1. Find the existing container pairing that matches either of the RFIDs
+		const [rows] = await connection.query(
+			'SELECT id, lf_id, RFID FROM gongyolegek WHERE lf_id IN (?, ?) OR RFID IN (?, ?) LIMIT 1',
+			[rfid1, rfid2, rfid1, rfid2]
+		)
+
+		if (rows.length === 0) {
+			// If neither RFID exists in the database, insert a new pairing (without barcode)
+			const [insertResult] = await connection.query(
+				'INSERT INTO gongyolegek (g_id, lf_id, RFID, aktiv) VALUES (?, ?, ?, ?)',
+				[1, rfid1, rfid2, 1]
+			)
+
+			await connection.commit()
+
+			return res.json({
+				success: true,
+				message: 'Új göngyöleg RFID párosítás sikeresen létrehozva (új párosításként).',
+				pairing_id: insertResult.insertId,
+				new_lf_id: rfid1,
+				new_RFID: rfid2,
+				is_new: true
+			})
+		}
+
+		const pairingId = rows[0].id
+		const oldLfId = rows[0].lf_id
+		const oldRFID = rows[0].RFID
+
+		// 2. Update the pairing in the gongyolegek table with the new set of RFIDs
+		await connection.query(
+			'UPDATE gongyolegek SET lf_id = ?, RFID = ? WHERE id = ?',
+			[rfid1, rfid2, pairingId]
+		)
+
+		// 3. Keep kinyom_cimkek in sync by updating the barcode pairing if it exists
+		await connection.query(
+			'UPDATE kinyom_cimkek SET lf_id = ?, RFID = ? WHERE lf_id = ? OR RFID = ?',
+			[rfid1, rfid2, oldLfId, oldRFID]
+		)
+
+		await connection.commit()
+
+		res.json({
+			success: true,
+			message: 'Göngyöleg RFID párosítás sikeresen frissítve (javítva).',
+			pairing_id: pairingId,
+			old_lf_id: oldLfId,
+			old_RFID: oldRFID,
+			new_lf_id: rfid1,
+			new_RFID: rfid2
+		})
+	} catch (error) {
+		if (connection) {
+			await connection.rollback()
+		}
+		console.error('Error repairing/updating gongyoleg pairing:', error)
+		res.status(500).json({ error: 'Internal server error' })
+	} finally {
+		if (connection) connection.release()
 	}
 });
 

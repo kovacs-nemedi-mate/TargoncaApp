@@ -1,4 +1,4 @@
-import { View, Text, TextInput, Pressable, StyleSheet, ScrollView } from "react-native";
+import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, Platform, StatusBar } from "react-native";
 import { useEffect, useRef, useState } from "react";
 import {
   getApiBaseUrl,
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingTop: Platform.OS === "ios" ? 48 : (StatusBar.currentHeight || 24) + 12,
     paddingBottom: 30,
     gap: 18,
   },

@@ -198,19 +198,23 @@ export default function Home({ navigation }) {
           <Text style={styles.lockText}>Az app addig nem enged tovább, amíg nincs elmentve érvényes IP vagy URL.</Text>
         </View>
       ) : (
-        <View style={styles.previewCard}>
-          <Pressable
-            style={[styles.actionButton, styles.secondaryButton]}
-            onPress={() => {
-              navigation.navigate("Pairing");
-            }}
-          >
-            <Text style={styles.secondaryButtonText}>Párosítás</Text>
-          </Pressable>
-          <View style={styles.previewHeader}>
-            <Text style={styles.previewTitle}>Aktív targonca</Text>
-            <Text style={styles.previewCount}>{targoncak.length} rekord</Text>
+        <>
+          <View style={styles.pairingCard}>
+            <Pressable
+              style={styles.pairingButton}
+              onPress={() => {
+                navigation.navigate("Pairing");
+              }}
+            >
+              <Text style={styles.pairingButtonText}>Göngyöleg párosítás</Text>
+            </Pressable>
           </View>
+
+          <View style={styles.previewCard}>
+            <View style={styles.previewHeader}>
+              <Text style={styles.previewTitle}>Aktív targonca</Text>
+              <Text style={styles.previewCount}>{targoncak.length} rekord</Text>
+            </View>
 
           {targoncak.length === 0 ? (
             <Text style={styles.previewEmpty}>Nincs elérhető targonca.</Text>
@@ -238,7 +242,8 @@ export default function Home({ navigation }) {
               );
             })
           )}
-        </View>
+          </View>
+        </>
       )}
 
       {addressConfigured ? (
@@ -294,7 +299,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#FFFFFF",
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: "800",
     marginBottom: 6,
   },
@@ -376,6 +381,37 @@ const styles = StyleSheet.create({
     borderColor: "#DDE7E3",
     marginBottom: 18,
     gap: 10,
+  },
+  pairingCard: {
+    backgroundColor: "#EAF6F3",
+    borderRadius: 18,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: "#BEE1DA",
+    marginBottom: 18,
+    gap: 8,
+  },
+  pairingTitle: {
+    color: "#0E5A50",
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  pairingSubtitle: {
+    color: "#3D6F67",
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  pairingButton: {
+    backgroundColor: "#0E7A6D",
+    borderRadius: 12,
+    alignItems: "center",
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  pairingButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
   },
   previewHeader: {
     flexDirection: "row",

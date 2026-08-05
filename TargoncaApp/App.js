@@ -2,7 +2,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import { useNetInfo } from "@react-native-community/netinfo";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, SafeAreaView, Platform, StatusBar } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Home from "./src/screens/Home";
 import Targonca from "./src/screens/Targonca";
@@ -16,9 +16,9 @@ function HomeStack() {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { height: 56 },
+        headerStyle: { height: 44 },
         headerTitleStyle: {
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: "700",
         },
         headerShadowVisible: false,
@@ -52,9 +52,11 @@ export default function App() {
   return (
     <View style={styles.container}>
       {offline ? (
-        <View style={styles.banner}>
-          <Text style={styles.bannerText}>Nincs hálózati kapcsolat. A szerver nem lesz elérhető.</Text>
-        </View>
+        <SafeAreaView style={styles.bannerContainer}>
+          <View style={styles.banner}>
+            <Text style={styles.bannerText}>Nincs hálózati kapcsolat. A szerver nem lesz elérhető.</Text>
+          </View>
+        </SafeAreaView>
       ) : null}
       <NavigationContainer>
         <Tab.Navigator
@@ -94,15 +96,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  bannerContainer: {
+    backgroundColor: "#B42318",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+  },
   banner: {
     backgroundColor: "#B42318",
     paddingHorizontal: 16,
     paddingVertical: 10,
+    alignItems: "center",
   },
   bannerText: {
     color: "#FFFFFF",
     fontSize: 14,
     fontWeight: "700",
+    textAlign: "center",
   },
 });
 

@@ -32,10 +32,9 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: "rgba(11, 23, 20, 0.45)",
-    justifyContent: "flex-end",
+    justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingBottom: 56,
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
