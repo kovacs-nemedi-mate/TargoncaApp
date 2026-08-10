@@ -215,7 +215,7 @@ app.post('/rfid_barcode', async (req, res) => {
 
 		// 2. Update kinyom_cimkek to pair both RFIDs with the barcode (vkod) by updating the vkod where both RFIDs match
 		const [result] = await db.query(
-			'UPDATE kinyom_cimkek SET vkod = ? WHERE lf_id = ? AND RFID = ?',
+			'UPDATE kinyom_cimkek SET vkod = ? WHERE lf_id = ? OR RFID = ?',
 			[barcode, lfId, hfId]
 		)
 
