@@ -259,8 +259,8 @@ app.post('/repair_gongyoleg', async (req, res) => {
 		if (rows.length === 0) {
 			// If neither RFID exists in the database, insert a new pairing (without barcode)
 			const [insertResult] = await connection.query(
-				'INSERT INTO gongyolegek (g_id, lf_id, RFID, aktiv) VALUES (?, ?, ?, ?)',
-				[1, rfid1, rfid2, 1]
+				'INSERT INTO kinyom_cimkek (g_id, lf_id, RFID) VALUES (?, ?, ?)',
+				[1, rfid1, rfid2]
 			)
 
 			await connection.commit()
