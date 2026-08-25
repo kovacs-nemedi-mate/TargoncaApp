@@ -199,6 +199,7 @@ app.post('/rfid_barcode', async (req, res) => {
 		return res.status(400).json({ error: 'Both rfid and barcode are required' })
 	}
 
+	let connection
 	try {
 		// 1. Find the RFID's pair/counterpart from the gongyolegek table
 		const [gongyolegekRows] = await db.query(
@@ -213,27 +214,56 @@ app.post('/rfid_barcode', async (req, res) => {
 		const lfId = gongyolegekRows[0].lf_id
 		const hfId = gongyolegekRows[0].RFID
 
-		// 2. Update kinyom_cimkek to pair both RFIDs with the barcode (vkod) by updating the vkod where both RFIDs match
-		const [result] = await db.query(
-			'UPDATE kinyom_cimkek SET vkod = ?, tomeg = ?, X = ?, Y = ?, Z = ? WHERE lf_id = ? OR RFID = ?',
-			[barcode, 0, 0, 0, 0, lfId, hfId]
+		connection = await db.getConnection()
+		await connection.beginTransaction()
+
+		// 2. Check if either RFID already exists in kinyom_cimkek, and if so, delete those rows
+		const [existingLabels] = await connection.query(
+			'SELECT id FROM kinyom_cimkek WHERE lf_id IN (?, ?) OR RFID IN (?, ?)',
+			[lfId, hfId, lfId, hfId]
+		)
+
+		let deletedCount = 0
+		if (existingLabels.length > 0) {
+			const [deleteResult] = await connection.query(
+				'DELETE FROM kinyom_cimkek WHERE lf_id IN (?, ?) OR RFID IN (?, ?)',
+				[lfId, hfId, lfId, hfId]
+			)
+			deletedCount = deleteResult.affectedRows
+		}
+
+		// 3. Update the kinyom_cimkek row matching the barcode to pair it with these RFIDs
+		const [result] = await connection.query(
+			'UPDATE kinyom_cimkek SET lf_id = ?, RFID = ?, tomeg = ?, X = ?, Y = ?, Z = ? WHERE vkod = ?',
+			[lfId, hfId, 0, 0, 0, 0, barcode]
 		)
 
 		if (result.affectedRows === 0) {
-			return res.status(404).json({ error: 'Nem található címke a megadott RFID pároshoz.' })
+			await connection.rollback()
+			return res.status(404).json({ error: 'Nem található címke a megadott vonalkóddal.' })
 		}
+
+		await connection.commit()
 
 		res.json({
 			success: true,
-			message: 'Barcode (vkod) updated successfully for the RFID pair',
+			message: 'Az RFID-k sikeresen hozzárendelve a vonalkódhoz',
 			lf_id: lfId,
 			RFID: hfId,
 			vkod: barcode,
+			deletedRows: deletedCount,
 			affectedRows: result.affectedRows
 		})
 	} catch (error) {
+		if (connection) {
+			await connection.rollback()
+		}
 		console.error('Error pairing RFID with barcode:', error)
 		res.status(500).json({ error: 'Internal server error' })
+	} finally {
+		if (connection) {
+			connection.release()
+		}
 	}
 });
 
@@ -259,8 +289,8 @@ app.post('/repair_gongyoleg', async (req, res) => {
 		if (rows.length === 0) {
 			// If neither RFID exists in the database, insert a new pairing (without barcode)
 			const [insertResult] = await connection.query(
-				'INSERT INTO kinyom_cimkek (g_id, lf_id, RFID) VALUES (?, ?, ?)',
-				[1, rfid1, rfid2]
+				'INSERT INTO gongyolegek (g_id, lf_id, RFID, aktiv) VALUES (?, ?, ?, ?)',
+				[1, rfid1, rfid2, 1]
 			)
 
 			await connection.commit()
