@@ -41,6 +41,15 @@ const db = mysql.createPool({
 	queueLimit: 0,
 })
 
+async function safeRollback(connection) {
+	if (!connection) return
+	try {
+		await connection.rollback()
+	} catch (err) {
+		console.error('Error during transaction rollback:', err)
+	}
+}
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -98,9 +107,7 @@ app.post('/cimkek', async (req, res) => {
 		await connection.commit()
 		res.json({ success: true, id: Number(pairingId), aktiv: 1 })
 	} catch (error) {
-		if (connection) {
-        	await connection.rollback();
-    	}
+		await safeRollback(connection)
 
    		 console.error("Error updating cimke:", error);
 
@@ -239,7 +246,7 @@ app.post('/rfid_barcode', async (req, res) => {
 		)
 
 		if (result.affectedRows === 0) {
-			await connection.rollback()
+			await safeRollback(connection)
 			return res.status(404).json({ error: 'Nem található címke a megadott vonalkóddal.' })
 		}
 
@@ -255,9 +262,7 @@ app.post('/rfid_barcode', async (req, res) => {
 			affectedRows: result.affectedRows
 		})
 	} catch (error) {
-		if (connection) {
-			await connection.rollback()
-		}
+		await safeRollback(connection)
 		console.error('Error pairing RFID with barcode:', error)
 		res.status(500).json({ error: 'Internal server error' })
 	} finally {
@@ -333,9 +338,7 @@ app.post('/repair_gongyoleg', async (req, res) => {
 			new_RFID: rfid2
 		})
 	} catch (error) {
-		if (connection) {
-			await connection.rollback()
-		}
+		await safeRollback(connection)
 		console.error('Error repairing/updating gongyoleg pairing:', error)
 		res.status(500).json({ error: 'Internal server error' })
 	} finally {

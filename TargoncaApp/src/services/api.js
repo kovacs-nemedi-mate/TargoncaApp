@@ -170,7 +170,11 @@ async function doRequest(method, path, body = null, options = {}) {
       try {
         payload = JSON.parse(text)
       } catch (e) {
-        throw new Error('Érvénytelen szerverválasz')
+        // eslint-disable-next-line no-console
+        console.error('Érvénytelen szerverválasz törzse:', text)
+        const cleanText = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+        const preview = cleanText.length > 80 ? `${cleanText.slice(0, 77)}...` : cleanText
+        throw new Error(`Érvénytelen szerverválasz: ${preview || text.slice(0, 80)}`)
       }
     }
 
